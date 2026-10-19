@@ -9,9 +9,12 @@ from worldscape_policy.memory.visual.normalization import (
     VisualInputRange,
     normalize_visual,
 )
-from worldscape_policy.visual_mosaic import prepare_diffusion_mosaic
+from worldscape_policy.visual_mosaic import (
+    prepare_diffusion_mosaic,
+    prepare_diffusion_robotwin_concat,
+)
 
-DiffusionViewLayout = Literal["mosaic_2x2"]
+DiffusionViewLayout = Literal["mosaic_2x2", "robotwin_concat"]
 
 
 class WanVisualCodec(nn.Module):
@@ -37,8 +40,10 @@ class WanVisualCodec(nn.Module):
         self.tile_size = tile_size
         self.tile_stride = tile_stride
         self.visual_input_range = visual_input_range
-        if diffusion_view_layout != "mosaic_2x2":
-            raise ValueError("diffusion_view_layout must be 'mosaic_2x2'")
+        if diffusion_view_layout not in {"mosaic_2x2", "robotwin_concat"}:
+            raise ValueError(
+                "diffusion_view_layout must be 'mosaic_2x2' or 'robotwin_concat'"
+            )
         self.diffusion_view_layout = diffusion_view_layout
 
     def encode_visual(self, video: torch.Tensor) -> torch.Tensor:
@@ -60,6 +65,11 @@ class WanVisualCodec(nn.Module):
         )
 
     def prepare_diffusion_video(self, views: torch.Tensor) -> torch.Tensor:
+        if self.diffusion_view_layout == "robotwin_concat":
+            return prepare_diffusion_robotwin_concat(
+                views,
+                input_range=self.visual_input_range,
+            )
         return prepare_diffusion_mosaic(
             views,
             input_range=self.visual_input_range,

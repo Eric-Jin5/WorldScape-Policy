@@ -276,8 +276,18 @@ PRETRAINED_MODEL_PATH="$WSP_MODEL_ROOT/wsp_2_pretrain" \
 NUM_GPUS=8 ./recipes/posttrain/posttrain_robotwin2_full.sh
 ```
 
-Evaluation uses 14-D absolute joint actions, 24-step chunks, nine
-rolling observation frames, and one persistent model per GPU worker:
+For raw-camera concatenation with a 48-action horizon and Auto context512:
+
+```bash
+DATA_ROOT=/data/robotwin2-clean \
+ZSCORE_STATS_PATH=/data/robotwin2-clean/dataset_stats.json \
+PRETRAINED_MODEL_PATH="$WSP_MODEL_ROOT/wsp_2_pretrain" \
+NUM_GPUS=8 bash recipes/posttrain/posttrain_robotwin2_robotwin_concat_horizon48.sh
+```
+
+
+Evaluation uses 14-D absolute joint actions, the checkpoint's 24- or 48-step
+horizon, nine rolling observation frames, and one persistent model per GPU worker:
 
 ```bash
 ROBOTWIN2_EVAL_MODEL_PATH=/path/to/checkpoint \

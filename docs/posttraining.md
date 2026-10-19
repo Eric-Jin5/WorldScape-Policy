@@ -45,6 +45,23 @@ recursively composes model, conditioning, memory, and WAM-owned fragments.
 Platform YAMLs contain only selector defaults, dataset constraints, loader
 differences, evaluation linkage, and platform prompt/geometry details.
 
+## RoboTwin concat H48
+
+The concat path is available through separate overlays:
+
+- `configs/posttrain/robotwin2_robotwin_concat.yaml`: configurable H24/H48 concat.
+- `configs/posttrain/robotwin2_robotwin_concat_h48_auto_context512.yaml`: Auto,
+  H48, one chunk, nine RGB frames, eight planning tokens, and context length 512.
+
+```bash
+PRETRAINED_MODEL_PATH=/models/wsp_2_pretrain \
+DATA_ROOT=/data/robotwin2-clean \
+ZSCORE_STATS_PATH=/data/robotwin2-clean/dataset_stats.json \
+RUN_NAME=robotwin2_concat_h48_auto_context512 \
+NUM_GPUS=8 MAX_STEPS=20000 SAVE_STEPS=2500 \
+bash recipes/posttrain/posttrain_robotwin2_robotwin_concat_horizon48.sh
+```
+
 ## Text-instruction prompts
 
 In Auto mode, the VLM receives the high-level task instruction through
