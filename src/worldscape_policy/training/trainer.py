@@ -49,6 +49,7 @@ from worldscape_policy.types import (
     PromptBatch,
     WorldActionOutput,
 )
+from worldscape_policy.visual_mosaic import validate_diffusion_view_layout
 from worldscape_policy.wam.wan22 import Wan22TrainingInputs
 
 
@@ -175,11 +176,9 @@ class NativeWan22BatchAdapter:
         self.channels_last = bool(channels_last)
         self.action_dim = action_dim
         self.state_dim = state_dim
-        if diffusion_view_layout not in {"mosaic_2x2", "robotwin_concat"}:
-            raise ValueError(
-                "diffusion_view_layout must be 'mosaic_2x2' or 'robotwin_concat'"
-            )
-        self.diffusion_view_layout = diffusion_view_layout
+        self.diffusion_view_layout = validate_diffusion_view_layout(
+            diffusion_view_layout
+        )
         self.vlm_preprocessing = validate_vlm_preprocessing(vlm_preprocessing)
         if self.diffusion_video_preprocessor is None:
             raise ValueError("diffusion_video_preprocessor is required")
@@ -188,15 +187,16 @@ class NativeWan22BatchAdapter:
             "__self__",
             None,
         )
-        codec_layout = getattr(
-            preprocessor_owner,
-            "diffusion_view_layout",
-            diffusion_view_layout,
+        codec_layout = validate_diffusion_view_layout(
+            getattr(
+                preprocessor_owner, "diffusion_view_layout", self.diffusion_view_layout
+            ),
+            path="visual codec diffusion_view_layout",
         )
-        if codec_layout != diffusion_view_layout:
+        if codec_layout != self.diffusion_view_layout:
             raise ValueError(
                 "batch adapter diffusion_view_layout does not match visual codec: "
-                f"{diffusion_view_layout!r} != {codec_layout!r}"
+                f"{self.diffusion_view_layout!r} != {codec_layout!r}"
             )
         for name, value in (("action_dim", action_dim), ("state_dim", state_dim)):
             if value is not None and value <= 0:

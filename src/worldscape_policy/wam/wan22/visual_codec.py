@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Literal
-
 import torch
 from torch import nn
 
@@ -10,11 +8,11 @@ from worldscape_policy.memory.visual.normalization import (
     normalize_visual,
 )
 from worldscape_policy.visual_mosaic import (
+    DiffusionViewLayout,
+    validate_diffusion_view_layout,
     prepare_diffusion_mosaic,
-    prepare_diffusion_robotwin_concat,
+    prepare_diffusion_mosaic_T,
 )
-
-DiffusionViewLayout = Literal["mosaic_2x2", "robotwin_concat"]
 
 
 class WanVisualCodec(nn.Module):
@@ -40,11 +38,9 @@ class WanVisualCodec(nn.Module):
         self.tile_size = tile_size
         self.tile_stride = tile_stride
         self.visual_input_range = visual_input_range
-        if diffusion_view_layout not in {"mosaic_2x2", "robotwin_concat"}:
-            raise ValueError(
-                "diffusion_view_layout must be 'mosaic_2x2' or 'robotwin_concat'"
-            )
-        self.diffusion_view_layout = diffusion_view_layout
+        self.diffusion_view_layout = validate_diffusion_view_layout(
+            diffusion_view_layout
+        )
 
     def encode_visual(self, video: torch.Tensor) -> torch.Tensor:
         if video.ndim == 6:
@@ -65,8 +61,8 @@ class WanVisualCodec(nn.Module):
         )
 
     def prepare_diffusion_video(self, views: torch.Tensor) -> torch.Tensor:
-        if self.diffusion_view_layout == "robotwin_concat":
-            return prepare_diffusion_robotwin_concat(
+        if self.diffusion_view_layout == "mosaic_T":
+            return prepare_diffusion_mosaic_T(
                 views,
                 input_range=self.visual_input_range,
             )

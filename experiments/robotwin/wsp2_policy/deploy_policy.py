@@ -160,7 +160,7 @@ class WSP2RoboTwinPolicy:
         self.adapter = RoboTwin2Adapter(
             checkpoint_transform=transform,
             vlm_history_num_frames=self.vlm_history_num_frames,
-            preserve_camera_resolution=self.diffusion_view_layout == "robotwin_concat",
+            preserve_camera_resolution=self.diffusion_view_layout == "mosaic_T",
             action_horizon=self.action_horizon,
             observation_interval=self.observation_interval,
             vlm_history_stride=self.vlm_history_stride,

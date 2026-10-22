@@ -5,6 +5,10 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 from worldscape_policy.data.video_preprocessing import validate_vlm_preprocessing
+from worldscape_policy.visual_mosaic import (
+    DiffusionViewLayout,
+    validate_diffusion_view_layout,
+)
 
 MODEL_CONFIG_SCHEMA_VERSION = "1"
 GENERATION_CONFIG_SCHEMA_VERSION = "1"
@@ -301,7 +305,7 @@ class VisualMemoryConfig:
     vae: ComponentConfig
     image_encoder: ComponentConfig
     persistent_prompt: Literal["none", "goal_or_demo"]
-    diffusion_view_layout: Literal["mosaic_2x2", "robotwin_concat"]
+    diffusion_view_layout: DiffusionViewLayout
     view_index: int
     tiled: bool
     tile_size: tuple[int, int]
@@ -332,11 +336,9 @@ class VisualMemoryConfig:
             raise ValueError(
                 f"{path}.persistent_prompt must be 'none' or 'goal_or_demo'"
             )
-        if raw["diffusion_view_layout"] not in {"mosaic_2x2", "robotwin_concat"}:
-            raise ValueError(
-                f"{path}.diffusion_view_layout must be 'mosaic_2x2' or "
-                "'robotwin_concat'"
-            )
+        layout = validate_diffusion_view_layout(
+            raw["diffusion_view_layout"], path=f"{path}.diffusion_view_layout"
+        )
 
         def pair(key: str) -> tuple[int, int]:
             item = raw[key]
@@ -354,7 +356,7 @@ class VisualMemoryConfig:
                 raw["image_encoder"], f"{path}.image_encoder"
             ),
             persistent_prompt=raw["persistent_prompt"],
-            diffusion_view_layout=raw["diffusion_view_layout"],
+            diffusion_view_layout=layout,
             view_index=_integer(raw["view_index"], f"{path}.view_index"),
             tiled=_boolean(raw["tiled"], f"{path}.tiled"),
             tile_size=pair("tile_size"),

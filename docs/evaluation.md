@@ -33,26 +33,12 @@ Use `EVALUATION.task_name=adjust_bottle` for a single task. Seed filtering,
 expert checks, instruction generation, video capture, and success accounting
 remain owned by RoboTwin.
 
-The same launcher supports legacy `mosaic_2x2` H24 and `robotwin_concat`
-H24/H48 checkpoints. Geometry is read from `model_config.yaml`: replan length
-defaults to the action horizon, observation interval to horizon/8, and VLM
-history stride to the horizon. Explicit geometry overrides must agree with the
-checkpoint. Concat retains raw camera images until the diffusion codec composes
-its 384×320 input. VLM preprocessing follows the optional checkpoint metadata.
-
-For an older checkpoint without VLM preprocessing metadata, the existing
-mosaic resize behavior is preserved; concat keeps the native head image.
-To reproduce a known training configuration, specify the full-frame VLM resize
-or raw mode explicitly, for example:
 
 ```bash
-ROBOTWIN2_EVAL_MODEL_PATH=/models/legacy-concat-checkpoint \
+ROBOTWIN2_EVAL_MODEL_PATH=/models/checkpoint \
 ROBOTWIN_VLM_PREPROCESSING='{mode: resize, height: 160, width: 320}' \
 bash recipes/eval/eval_robotwin2.sh
 ```
-
-Use `'{mode: raw}'` for raw VLM input. The selected geometry, preprocessing,
-and precision are reported in `[wsp2-config]`. 
 
 ## HDF5 replay
 

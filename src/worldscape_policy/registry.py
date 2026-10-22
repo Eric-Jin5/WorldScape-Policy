@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any
 
 from torch import nn
 
@@ -14,6 +14,7 @@ from worldscape_policy.memory.visual import VisualPrefillManager, WanVisualCodec
 from worldscape_policy.memory.visual.normalization import VisualInputRange
 from worldscape_policy.policy import WorldScapePolicy
 from worldscape_policy.types import InteractionMode
+from worldscape_policy.visual_mosaic import DiffusionViewLayout
 from worldscape_policy.wam.registry import DEFAULT_WAM_REGISTRY, WAMRegistry
 from worldscape_policy.wam.wan22 import (
     Wan22DistributedConfig,
@@ -38,7 +39,7 @@ class Wan22PolicyBuildConfig:
     tile_size: tuple[int, int] = (34, 34)
     tile_stride: tuple[int, int] = (18, 16)
     visual_input_range: VisualInputRange = "zero_one"
-    diffusion_view_layout: Literal["mosaic_2x2", "robotwin_concat"] = "mosaic_2x2"
+    diffusion_view_layout: DiffusionViewLayout = "mosaic_2x2"
     vlm_preprocessing: dict[str, Any] | None = None
     distributed: Wan22DistributedConfig = field(
         default_factory=Wan22DistributedConfig

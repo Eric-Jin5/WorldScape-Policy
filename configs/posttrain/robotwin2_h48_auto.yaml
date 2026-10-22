@@ -1,5 +1,5 @@
 includes:
-  - robotwin2_robotwin_concat.yaml
+  - robotwin2.yaml
 
 selectors:
   mode: auto

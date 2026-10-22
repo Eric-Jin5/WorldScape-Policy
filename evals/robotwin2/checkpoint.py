@@ -7,13 +7,16 @@ from typing import Any
 
 import yaml
 
-from worldscape_policy.data.video_preprocessing import validate_vlm_preprocessing
-
 from worldscape_policy.checkpoint.transforms import (
     TRANSFORM_BUNDLE_FILENAME,
     CheckpointTransformArtifact,
     EmbodimentTransform,
     NativeCheckpointTransform,
+)
+from worldscape_policy.data.video_preprocessing import validate_vlm_preprocessing
+from worldscape_policy.visual_mosaic import (
+    DiffusionViewLayout,
+    validate_diffusion_view_layout,
 )
 
 
@@ -22,7 +25,7 @@ class RoboTwin2CheckpointMetadata:
     """Small inference contract read from YAML without loading model weights."""
 
     action_horizon: int
-    diffusion_view_layout: str
+    diffusion_view_layout: DiffusionViewLayout
     vlm_preprocessing: dict[str, Any] | None
 
 
@@ -45,9 +48,10 @@ def load_robotwin2_checkpoint_metadata(
         raise ValueError("Invalid RoboTwin2 checkpoint inference metadata") from exc
     if isinstance(horizon, bool) or horizon not in {24, 48}:
         raise ValueError("RoboTwin2 checkpoint action_horizon must be 24 or 48")
-    if layout not in {"mosaic_2x2", "robotwin_concat"}:
-        raise ValueError("Unsupported RoboTwin2 checkpoint diffusion_view_layout")
-    return RoboTwin2CheckpointMetadata(int(horizon), str(layout), preprocessing)
+    layout = validate_diffusion_view_layout(
+        layout, path="RoboTwin2 checkpoint diffusion_view_layout"
+    )
+    return RoboTwin2CheckpointMetadata(int(horizon), layout, preprocessing)
 
 
 def resolve_robotwin2_evaluation_config(
@@ -62,6 +66,8 @@ def resolve_robotwin2_evaluation_config(
         ("diffusion_view_layout", metadata.diffusion_view_layout),
     ):
         requested = overrides.get(key)
+        if key == "diffusion_view_layout" and requested is not None:
+            requested = validate_diffusion_view_layout(requested)
         if requested is not None and requested != expected:
             raise ValueError(
                 f"Evaluation {key}={requested!r} conflicts with checkpoint {expected!r}"

@@ -6,7 +6,7 @@ import os
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, Mapping, cast
+from typing import Any, Literal, Mapping
 
 import torch
 from hydra.utils import instantiate
@@ -29,6 +29,10 @@ from worldscape_policy.registry import (
     build_wan22_policy,
 )
 from worldscape_policy.types import InteractionMode
+from worldscape_policy.visual_mosaic import (
+    DiffusionViewLayout,
+    validate_diffusion_view_layout,
+)
 from worldscape_policy.wam.registry import DEFAULT_WAM_REGISTRY, WAMRegistry
 from worldscape_policy.wam.wan22 import Wan22DistributedContext, Wan22KernelConfig
 
@@ -72,7 +76,7 @@ def build_wan22_policy_from_checkpoint(
     checkpoint_dir: str | Path | None = None,
     *,
     visual_input_range: VisualInputRange,
-    diffusion_view_layout: Literal["mosaic_2x2", "robotwin_concat"] | None = None,
+    diffusion_view_layout: DiffusionViewLayout | None = None,
     device: str | torch.device = "cpu",
     expected_mode: InteractionMode | str | None = None,
     expected_num_frames: int | None = None,
@@ -161,19 +165,14 @@ def build_wan22_policy_from_checkpoint(
             raise ValueError("vlm_context_dim must be positive")
         action["vlm_context_dim"] = int(vlm_context_dim)
     if diffusion_view_layout is not None:
-        if diffusion_view_layout not in {"mosaic_2x2", "robotwin_concat"}:
-            raise ValueError(
-                "diffusion_view_layout must be 'mosaic_2x2' or 'robotwin_concat'"
-            )
-        action["diffusion_view_layout"] = diffusion_view_layout
-    resolved_diffusion_view_layout = str(
-        action.get("diffusion_view_layout", "mosaic_2x2")
-    )
-    if resolved_diffusion_view_layout not in {"mosaic_2x2", "robotwin_concat"}:
-        raise ValueError(
-            "checkpoint diffusion_view_layout must be 'mosaic_2x2' or "
-            "'robotwin_concat'"
+        action["diffusion_view_layout"] = validate_diffusion_view_layout(
+            diffusion_view_layout
         )
+    resolved_diffusion_view_layout = validate_diffusion_view_layout(
+        action.get("diffusion_view_layout", "mosaic_2x2"),
+        path="checkpoint diffusion_view_layout",
+    )
+    action["diffusion_view_layout"] = resolved_diffusion_view_layout
     registration = wam_registry.get("wan22")
     if "sampling" not in registration.metadata.capabilities:
         raise NotImplementedError("Registered Wan2.2 plugin does not support sampling")
@@ -294,10 +293,7 @@ def build_wan22_policy_from_checkpoint(
                 int(action.get("tile_stride_width", 16)),
             ),
             visual_input_range=visual_input_range,
-            diffusion_view_layout=cast(
-                Literal["mosaic_2x2", "robotwin_concat"],
-                resolved_diffusion_view_layout,
-            ),
+            diffusion_view_layout=resolved_diffusion_view_layout,
             vlm_preprocessing=action.get("vlm_preprocessing"),
         ),
         vlm=vlm,
